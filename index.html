@@ -1,0 +1,188 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>SmartCube AI</title>
+<style>
+:root{--bg:#eef0f3;--sf:#fff;--tx:#12151a;--mu:#667085;--ac:#e8590c;--bd:#d9dde3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101216;--sf:#191c22;--tx:#e9ebef;--mu:#98a0ad;--ac:#ff8a3d;--bd:#2b3039;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#101216;--sf:#191c22;--tx:#e9ebef;--mu:#98a0ad;--ac:#ff8a3d;--bd:#2b3039;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding:10px 16px;background:var(--sf);border-bottom:1px solid var(--bd)}
+h1{font-size:19px;margin:0;font-weight:800;letter-spacing:.5px}h1 b{color:var(--ac)}
+nav{display:flex;gap:4px;flex-wrap:wrap}nav button{border:0;background:none;padding:6px 12px;border-radius:6px;color:var(--mu)}nav button.on{background:var(--ac);color:#fff}
+main{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,1fr);gap:12px;padding:12px;max-width:1200px;margin:auto}
+@media(max-width:860px){main{grid-template-columns:1fr}}
+.box{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:12px}
+#cv{position:relative;height:min(56vh,480px);min-height:300px;touch-action:none;cursor:grab;padding:0;overflow:hidden}#cv canvas{display:block;width:100%;height:100%}
+button{background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:7px;padding:5px 10px;font:inherit;cursor:pointer}button:hover{border-color:var(--ac)}
+select{background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:7px;padding:5px;font:inherit}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0}.mu{color:var(--mu);font-size:13px}
+.mv{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:8px}.mv div{display:flex;flex-direction:column;gap:3px}.mv button{padding:4px 0;font-size:13px}
+.scr{font:600 17px/1.6 ui-monospace,Menlo,Consolas,monospace;word-break:break-word}
+.tm{font:700 64px/1.1 ui-monospace,Menlo,Consolas,monospace;text-align:center;margin:8px 0;cursor:pointer;user-select:none}
+.tl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.tl div{border:1px solid var(--bd);border-radius:8px;padding:6px 8px}.tl b{display:block;font-size:17px}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:4px 6px;border-bottom:1px solid var(--bd);text-align:left}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:8px 0}
+.tip{border-left:3px solid var(--ac);padding:2px 10px;margin:6px 0}.hid{display:none}main.one{grid-template-columns:1fr;max-width:640px}.pt .co{display:none}
+tr.k{cursor:pointer}tr.k:hover{background:var(--bg)}
+</style></head><body>
+<header><h1>SmartCube <b>AI</b></h1><nav id="nv"></nav></header>
+<main><section id="cvs"><div id="cv" class="box"></div>
+<div class="box" style="margin-top:12px"><div class="row"><button id="un">撤销</button><button id="re">重做</button><button id="rs">重置魔方</button><span class="mu">键盘：R L U D F B M E S X Y Z，Shift 逆时针，W 切换双层，空格计时；也可在下方输入公式（小写 r u 等即双层）</span></div><div class="mv" id="mv"></div><div class="row"><input id="fi" placeholder="输入公式，如 r U R' M2 x" style="flex:1;min-width:0;background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:7px;padding:5px;font:inherit"><button id="fb">执行</button></div></div></section>
+<aside class="box">
+<div id="p-timer"><div class="row"><select id="mth" class="co"><option>CFOP</option><option>LBL</option><option>Roux</option><option disabled>ZZ（开发中）</option></select><select id="styp"><option value="full">标准 20 步</option><option value="short">短打乱 8 步（Cross 练习）</option><option value="pll">PLL 专项</option><option value="oll">OLL 专项</option><option value="daily">每日挑战（当天固定打乱）</option></select></div>
+<div id="scr" class="scr"></div><div class="row"><button id="bns">新打乱</button><button id="bcp">复制</button></div>
+<div id="tm" class="tm">0.00</div><div id="st" class="mu" style="text-align:center">按空格或点击时间开始</div>
+<div class="row" style="justify-content:center"><button id="p2">+2</button><button id="pd">DNF</button><button id="px">删除</button></div>
+<div class="tl" id="tt"></div>
+<div class="row"><label class="co">转速 <input type="range" id="spd" min="40" max="400" value="140"></label><label><input type="checkbox" id="insp"> 观察 15 秒</label><label class="co"><input type="checkbox" id="wide"> 双层(w)</label></div><div class="row"><label><input type="checkbox" id="sv" checked> 保存到统计</label><label class="co"><input type="checkbox" id="ai" checked> 生成 AI 分析</label></div></div>
+<div id="p-stats" class="hid"></div><div id="p-ai" class="hid"></div><div id="p-alg" class="hid"></div>
+</aside></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const FC={R:['x',1],L:['x',-1],U:['y',1],D:['y',-1],F:['z',1],B:['z',-1],M:['x',-1],E:['y',-1],S:['z',1],x:['x',1],y:['y',1],z:['z',1]},DR={R:[1,0,0],L:[-1,0,0],U:[0,1,0],D:[0,-1,0],F:[0,0,1],B:[0,0,-1]};
+const CL={U:0xf5d90a,D:0xf2f2f2,F:0x1faa4b,B:0x2457d6,R:0xff8a1f,L:0xd92b2b},NF={};for(const f in DR)NF[DR[f].join()]=f;
+const CN={R:'右',L:'左',U:'上',D:'下',F:'前',B:'后',M:'M 中层（同 L 方向）',E:'E 中层（同 D 方向）',S:'S 中层（同 F 方向）',x:'整体 x（同 R）',y:'整体 y（同 U）',z:'整体 z（同 F）'};
+// ---- 3D ----
+const wr=$('#cv'),RD=new THREE.WebGLRenderer({antialias:true,alpha:true}),sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(38,1,.1,100);cam.position.set(0,0,10);
+wr.appendChild(RD.domElement);sc.add(new THREE.AmbientLight(0xffffff,.75));const dl=new THREE.DirectionalLight(0xffffff,.6);dl.position.set(3,6,8);sc.add(dl);
+const cg=new THREE.Group();cg.rotation.order='YXZ';cg.rotation.x=.5;cg.rotation.y=-.7;sc.add(cg);const pv=new THREE.Object3D();cg.add(pv);
+const cubies=[],bg=new THREE.BoxGeometry(.97,.97,.97),bm=new THREE.MeshLambertMaterial({color:0x15171a}),sg=new THREE.PlaneGeometry(.82,.82),V=THREE.Vector3;
+for(let x=-1;x<2;x++)for(let y=-1;y<2;y++)for(let z=-1;z<2;z++){const g=new THREE.Group();g.userData.p=[x,y,z];g.add(new THREE.Mesh(bg,bm));
+for(const f in DR){const d=DR[f];if(d[0]*x+d[1]*y+d[2]*z===1){const m=new THREE.Mesh(sg,new THREE.MeshLambertMaterial({color:CL[f]})),n=new V(...d);m.quaternion.setFromUnitVectors(new V(0,0,1),n);m.position.copy(n).multiplyScalar(.49);m.userData={f,n,s:1};g.add(m)}}
+cg.add(g);cubies.push(g)}
+function resetCube(){cubies.forEach(c=>{c.position.set(...c.userData.p);c.quaternion.identity()})}
+function size(){const w=wr.clientWidth,h=wr.clientHeight;RD.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix()}addEventListener('resize',size);size();
+let dg=null;RD.domElement.addEventListener('pointerdown',e=>{dg=[e.clientX,e.clientY];RD.domElement.setPointerCapture(e.pointerId)});
+addEventListener('pointerup',()=>dg=null);RD.domElement.addEventListener('pointermove',e=>{if(!dg)return;cg.rotation.y+=(e.clientX-dg[0])*.01;cg.rotation.x=Math.max(-1.4,Math.min(1.4,cg.rotation.x+(e.clientY-dg[1])*.01));dg=[e.clientX,e.clientY]});
+// ---- moves ----
+const Q=[];let cur=null;
+const norm=s=>/^[rludfb]/.test(s)?s[0].toUpperCase()+'w'+s.slice(1):s;const valid=s=>/^([RLUDFB]w?|[MESxyz])(['2]?)$/.test(s);const pure=()=>tab==='timer';
+const parse=s=>{const r=/^([RLUDFBMESxyz])(w?)(['2]?)$/.exec(norm(s));return{f:r[1],w:!!r[2],d:r[3]==="'"?-1:r[3]==='2'?2:1}};
+const inv=s=>s.endsWith("'")?s.slice(0,-1):s.endsWith('2')?s:s+"'";const invA=a=>a.slice().reverse().map(inv);
+const dur=()=>+$('#spd').value;
+function begin(q){const m=q.m,[a,s]=FC[m.f],sel=cubies.filter(c=>{const v=Math.round(c.position[a]);return 'xyz'.includes(m.f)?true:'MES'.includes(m.f)?v===0:m.w?v*s>=0:v===s});
+cur={q,a,g:-s*m.d*Math.PI/2,s:performance.now(),sel};sel.forEach(c=>pv.attach(c))}
+function snap(c){c.position.set(Math.round(c.position.x),Math.round(c.position.y),Math.round(c.position.z));const m=new THREE.Matrix4().makeRotationFromQuaternion(c.quaternion);m.elements=m.elements.map(Math.round);c.quaternion.setFromRotationMatrix(m)}
+function end(){pv.rotation[cur.a]=cur.g;pv.updateMatrixWorld(true);cur.sel.forEach(c=>{cg.attach(c);snap(c)});pv.rotation.set(0,0,0);const q=cur.q;cur=null;done(q)}
+function instant(s){begin({m:parse(s)});end()}
+function flush(){if(cur)end();Q.length=0}
+function anim(){if(!cur&&Q.length)begin(Q.shift());if(cur){const p=Math.min(1,(performance.now()-cur.s)/dur()),e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;pv.rotation[cur.a]=cur.g*e;if(p>=1)end()}}
+// ---- state checks ----
+function cen(){const C={};cubies.forEach(c=>{const p=c.position;if(Math.abs(p.x)+Math.abs(p.y)+Math.abs(p.z)===1)C[NF[[Math.round(p.x),Math.round(p.y),Math.round(p.z)].join()]]=c.children[1].userData.f});return C}
+const nowF=(c,s)=>{const n=s.userData.n.clone().applyQuaternion(c.quaternion);return NF[[Math.round(n.x),Math.round(n.y),Math.round(n.z)].join()]};
+function ok(pred){const C=cen();return cubies.every(c=>{const p=c.position;if(!pred(Math.round(p.x),Math.round(p.y),Math.round(p.z)))return true;return c.children.every(s=>!s.userData.s||s.userData.f===C[nowF(c,s)])})}
+function ollTop(){const C=cen();return cubies.every(c=>c.children.every(s=>!s.userData.s||nowF(c,s)!=='U'||s.userData.f===C.U))}
+const solved=()=>ok(()=>true),lay=y0=>ok((x,y)=>y<=y0),blk=s=>ok((x,y)=>x===s&&y<=0);
+const MT={CFOP:[['Cross',()=>ok((x,y,z)=>y===-1&&Math.abs(x)+Math.abs(z)===1)],['F2L',()=>lay(0)],['OLL',()=>lay(0)&&ollTop()],['PLL',solved]],
+LBL:[['第一层',()=>lay(-1)],['第二层',()=>lay(0)],['最后一层',solved]],
+Roux:[['First Block',()=>blk(-1)||blk(1)],['Second Block',()=>blk(-1)&&blk(1)],['CMLL',()=>blk(-1)&&blk(1)&&ok((x,y,z)=>Math.abs(x)+Math.abs(y)+Math.abs(z)===3)],['LSE',solved]]};
+// ---- algs ----
+const ALGS=[{n:'Sune',s:'OLL',a:"R U R' U R U2 R'"},{n:'Anti-Sune',s:'OLL',a:"R U2 R' U' R U' R'"},{n:'线型 OLL',s:'OLL',a:"F R U R' U' F'"},
+{n:'T-Perm',s:'PLL',a:"R U R' U' R' F R2 U' R' U' R U R' F'"},{n:'Y-Perm',s:'PLL',a:"F R U' R' U' R U R' F' R U R' U' R' F R F'"},{n:'Ua-Perm',s:'PLL',a:"R U' R U R U R U' R' U' R2"},{n:'Ub-Perm',s:'PLL',a:"R2 U R U R' U' R' U' R' U R'"},{n:'Jb-Perm',s:'PLL',a:"R U R' F' R U R' U' R' F R2 U' R'"}];
+const AL=LS.get('sc_alg',{});
+// ---- timer ----
+let D=LS.get('sc_solves',[]),S={mode:'idle',mv:[],ph:[],pi:0,scr:'',dirty:false,pen:0,sel:-1},hist=[],redo=[],tab='timer',rp=null;
+const PH=()=>MT[S.method||$('#mth').value];
+const fm=ms=>{if(ms===Infinity)return'DNF';const s=ms/1000;return s>=60?Math.floor(s/60)+':'+(s%60).toFixed(2).padStart(5,'0'):s.toFixed(2)};
+const val=s=>s.pen==='DNF'?Infinity:s.t+(s.pen===2?2000:0);
+function ao(a,n){if(a.length<n)return null;const k=Math.ceil(n*.05),t=a.slice(-n).sort((x,y)=>x-y).slice(k,n-k);return t.includes(Infinity)?Infinity:t.reduce((p,c)=>p+c,0)/t.length}
+function bestAo(a,n){let b=null;for(let i=n;i<=a.length;i++){const v=ao(a.slice(0,i),n);if(v!==null&&(b===null||v<b))b=v}return b}
+function gen(t){if(t==='daily'){let h=0;for(const ch of new Date().toISOString().slice(0,10))h=(h*31+ch.charCodeAt(0))|0;const R0=Math.random;Math.random=()=>{h=(h+0x6D2B79F5)|0;let x=Math.imul(h^h>>>15,1|h);x=x+Math.imul(x^x>>>7,61|x)^x;return((x^x>>>14)>>>0)/4294967296};const r=gen('full');Math.random=R0;return r}let a=[];if(t==='pll'||t==='oll'){const L=ALGS.filter(x=>x.s===t.toUpperCase()),g=L[Math.random()*L.length|0];a=invA(g.a.split(' '));const u=['','U',"U'",'U2'][Math.random()*4|0];if(u)a.push(u)}
+else{const n=t==='short'?8:20,ax=f=>FC[f][0];let p=[];while(p.length<n){const f='RLUDFB'[Math.random()*6|0],l=p[p.length-1],l2=p[p.length-2];if(f===l||(l&&ax(l)===ax(f)&&l2===f))continue;p.push(f)}a=p.map(f=>f+['',"'",'2'][Math.random()*3|0])}return a}
+function newScramble(){const a=gen($('#styp').value);if(!pure()){flush();resetCube();a.forEach(instant)}S.scr=a.join(' ');S.dirty=false;hist=[];redo=[];$('#scr').textContent=S.scr;$('#st').textContent='按空格或点击时间开始'}
+function userMove(ms,nh){ms=norm(ms);if(S.mode==='inspect'||rp||pure())return;let t=null;if(S.mode==='idle')S.dirty=true;if(S.mode==='solving'){t=performance.now()-S.t0;S.mv.push({m:ms,t})}
+Q.push({m:parse(ms),rec:S.mode==='solving',t,idx:S.mv.length});if(!nh){hist.push(ms);redo.length=0}}
+function done(q){if(!q.rec||S.mode!=='solving')return;const P=PH();while(S.pi<P.length&&P[S.pi][1]()){S.ph.push({n:P[S.pi][0],i:q.idx,t:q.t});S.pi++}if(solved())finish(q.t,q.idx)}
+function startSolve(){let p=0;if(S.mode==='inspect'){const e=(performance.now()-S.i0)/1000;p=e>17?'DNF':e>15?2:0}S.pen=p;S.mode='solving';S.t0=performance.now();S.mv=[];S.ph=[];S.pi=0;S.method=pure()?'纯计时':$('#mth').value;S.pure=pure();$('#st').textContent=pure()?'计时中…还原实体魔方后按空格停止':'计时中…再按空格停止，或还原后自动停止'}
+function finish(t,n){const s={t,pen:S.pen,scr:S.scr,mv:$('#ai').checked?S.mv.slice(0,n):[],method:S.method,pure:S.pure||!$('#ai').checked,ph:S.ph.slice(),d:Date.now(),daily:$('#styp').value==='daily'?new Date().toISOString().slice(0,10):0};if($('#sv').checked){D.push(s);LS.set('sc_solves',D);S.sel=D.length-1}S.mode='idle';S.last=s;
+$('#tm').textContent=fm(val(s));$('#st').textContent=s.pure?'已保存（纯计时）':`步数 ${s.mv.length} · TPS ${(s.mv.length/(t/1000)).toFixed(2)} · 在「AI 分析」查看报告`;tiles();setTimeout(()=>{if((tab==='timer'||tab==='sim')&&S.mode==='idle')newScramble()},1500)}
+function space(){if((tab!=='timer'&&tab!=='sim')||rp)return;if(S.mode==='idle'){if(S.dirty&&!pure()){newScramble();return}flush();if($('#insp').checked){S.mode='inspect';S.i0=performance.now();$('#st').textContent='观察中，按空格开始还原'}else startSolve()}
+else if(S.mode==='inspect')startSolve();else if(S.mode==='solving')finish(performance.now()-S.t0,S.mv.length)}
+function disp(){if(S.mode==='solving')$('#tm').textContent=fm(performance.now()-S.t0);else if(S.mode==='inspect')$('#tm').textContent=Math.max(0,Math.ceil(15-(performance.now()-S.i0)/1000))}
+function tiles(){const v=D.map(val),b=v.filter(x=>x<Infinity),f=x=>x===null?'-':fm(x);
+$('#tt').innerHTML=[['Single',b.length?f(Math.min(...b)):'-'],['Ao5',f(ao(v,5))],['Ao12',f(ao(v,12))],['Ao50',f(ao(v,50))],['Ao100',f(ao(v,100))],['还原次数',D.length]].map(x=>`<div><span class="mu">${x[0]}</span><b>${x[1]}</b></div>`).join('')}
+// ---- analysis ----
+function analyze(s){const mv=s.mv,T=s.t,rows=[];let pe=0,pt=0;s.ph.forEach(p=>{const mc=p.i-pe,tm=p.t-pt;rows.push({n:p.n,mc,tm,tps:mc&&tm?mc/(tm/1000):0,first:mv[pe]?mv[pe].t-pt:0,sh:tm/T,a:pe,b:p.i});pe=p.i;pt=p.t});
+const gp=mv.slice(1).map((m,i)=>m.t-mv[i].t),md=gp.slice().sort((a,b)=>a-b)[gp.length>>1]||0,th=Math.max(450,3*md),ps=gp.filter(g=>g>th);
+let mg=0;mv.forEach((m,i)=>{if(i&&m.m[0]===mv[i-1].m[0])mg++});rows.forEach(x=>{x.pz=0;for(let k=x.a;k<x.b;k++){const g=k?mv[k].t-mv[k-1].t:mv[k].t;if(g>th)x.pz+=g}});let mx=0,mi=-1;gp.forEach((g,k)=>{if(g>mx){mx=g;mi=k+1}});return{rows,pc:ps.length,pa:ps.length?ps.reduce((a,b)=>a+b,0)/ps.length:0,mg,tps:mv.length/(T/1000),th,mx,mi}}
+function sug(s,r){const o=[],g=n=>r.rows.find(x=>x.n===n),sec=x=>(x/1000).toFixed(1);
+if(s.method==='CFOP'){const c=g('Cross');if(c){if(c.mc>8)o.push(`Cross 用了 ${c.mc} 步（参考 8 步以内），建议加强 Cross Planning。`);if(c.first>2500)o.push(`开始转动前规划了约 ${sec(c.first)} 秒，可在观察阶段规划完整 Cross。`)}
+const f=g('F2L');if(f){if(f.sh>.5)o.push(`F2L 占总时间 ${Math.round(f.sh*100)}%，建议练习 Pair Recognition 与 Lookahead。`);if(f.tps&&f.tps<2.5)o.push(`F2L 的 TPS 只有 ${f.tps.toFixed(1)}，建议练习流畅度。`)}
+['OLL','PLL'].forEach(n=>{const x=g(n);if(x){if(x.first>800)o.push(`${n} 识别约耗时 ${sec(x.first)} 秒（阶段开始到第一次转动），建议加强 ${n} Recognition。`);if(x.tps&&x.tps<3.5&&x.mc>=6)o.push(`${n} 执行 TPS 仅 ${x.tps.toFixed(1)}，建议做公式专项训练。`)}})}
+else if(r.rows.length){const w=r.rows.slice().sort((a,b)=>b.tm-a.tm)[0];o.push(`最耗时的阶段是 ${w.n}（${Math.round(w.sh*100)}%），建议优先改善。`)}
+r.rows.forEach(x=>{if(x.sh>.3&&x.tm>800){const z=x.pz/x.tm;o.push(`${x.n} 用时 ${sec(x.tm)} 秒，其中停顿占 ${Math.round(z*100)}%、TPS ${x.tps.toFixed(1)}：${z>.4?'慢在识别或规划（想得久），不是手速问题，建议做识别与 Lookahead 专项':'慢在执行（停顿不多但转动偏慢），建议练习指法流畅度'}。`)}});if(r.mx>700&&r.mi>0){const px=r.rows.find(x=>r.mi>=x.a&&r.mi<x.b);o.push(`最长的一次停顿 ${sec(r.mx)} 秒，出现在${px?px.n+' 阶段':'未完成阶段'}第 ${r.mi+1} 步（${s.mv[r.mi-1].m} 之后、${s.mv[r.mi].m} 之前）。`)}if(r.pc>=5)o.push(`出现 ${r.pc} 次明显停顿（平均 ${sec(r.pa)} 秒，阈值 ${sec(r.th)} 秒），建议加强 Lookahead。`);
+if(r.mg>0)o.push(`有 ${r.mg} 处相邻转动同面，可合并或抵消，注意动作效率。`);
+if(s.ph.length<MT[s.method].length)o.push('本次未走完全部阶段（手动停止或未按所选方法还原），阶段分析不完整。');
+return o.length?o:['本次没有发现明显弱点，继续保持。']}
+const PAL=['#e8590c','#2f9e44','#1c7ed6','#ae3ec9','#f08c00'];
+function renderAI(){const el=$('#p-ai');if(!D.length){el.innerHTML='<p class="mu">还没有还原记录。先到计时器完成一次还原。</p>';return}
+const i=S.sel>=0?S.sel:D.length-1,s=D[i];if(s.pure){el.innerHTML=`<b>第 ${i+1} 次 · 纯计时 · ${fm(val(s))}</b><p class="mu">${s.scr}</p><p class="mu">纯计时记录没有转动数据，无法做 AI 分析。用虚拟魔方还原才会有分析报告。</p>`;return}const r=analyze(s),pv5=D.slice(0,i).filter(x=>x.method===s.method&&x.pen!=='DNF').slice(-5);let cmp='';
+if(pv5.length>=3){const a=pv5.reduce((p,c)=>p+val(c),0)/pv5.length,tp=pv5.reduce((p,c)=>p+c.mv.length/(c.t/1000),0)/pv5.length;cmp=`<p>对比此前 ${pv5.length} 次 ${s.method}：用时 ${val(s)<a?'快':'慢'} ${fm(Math.abs(val(s)-a))} 秒，TPS ${r.tps>=tp?'+':'-'}${Math.abs(r.tps-tp).toFixed(2)}。</p>`}
+el.innerHTML=`<div class="row"><b>第 ${i+1} 次 · ${s.method} · ${fm(val(s))}${s.pen===2?'(+2)':''}</b></div><div class="mu">${s.scr}</div>
+<div class="tl" style="margin:8px 0"><div><span class="mu">步数</span><b>${s.mv.length}</b></div><div><span class="mu">TPS</span><b>${r.tps.toFixed(2)}</b></div><div><span class="mu">停顿</span><b>${r.pc}</b></div></div>
+<div class="bar">${r.rows.map((x,k)=>`<span title="${x.n}" style="width:${x.sh*100}%;background:${PAL[k%5]}"></span>`).join('')}</div>
+<table><tr><th>阶段</th><th>用时</th><th>步数</th><th>TPS</th><th>起手停顿</th></tr>${r.rows.map(x=>`<tr><td>${x.n}</td><td>${fm(x.tm)}</td><td>${x.mc}</td><td>${x.tps.toFixed(1)}</td><td>${fm(x.first)}</td></tr>`).join('')}</table>${cmp}
+<h4>对比另一次还原</h4><select id="cm"><option value="">选择…</option>${D.map((x,k)=>k!==i&&!x.pure?`<option value="${k}">第 ${k+1} 次 ${x.method} ${fm(val(x))}</option>`:'').join('')}</select><div id="cmr"></div><h4>改善建议</h4>${sug(s,r).map(t=>`<div class="tip">${t}</div>`).join('')}
+<div class="row"><button id="rpl">重播</button><button id="rpp">暂停/继续</button><select id="rpr"><option value="1">1×</option><option value="2">2×</option><option value=".5">0.5×</option></select><span class="mu" id="rps"></span></div>
+<details open><summary class="mu">逐步复盘（点任一步，魔方回到该步之后的状态；粗框=停顿）</summary><div>${s.mv.map((m,k)=>{const g=k?m.t-s.mv[k-1].t:m.t;return`<button data-k="${k}" title="${(m.t/1000).toFixed(2)}s" style="padding:1px 5px;margin:1px;${g>r.th?'border:2px solid var(--ac)':''}">${m.m}</button>${s.ph.filter(p=>p.i-1===k).map(p=>`<b class="mu">｜${p.n}完成｜</b>`).join('')}`}).join('')}</div></details>`;
+$('#rpl').onclick=()=>replay(s);$('#rpp').onclick=()=>{if(!rp)return;rp.p=!rp.p;if(!rp.p)rstep()};
+el.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{const k=+b.dataset.k;stopRp();flush();resetCube();s.scr.split(' ').forEach(instant);s.mv.slice(0,k+1).forEach(m=>instant(m.m));$('#rps').textContent=`已回到第 ${k+1} 步（${s.mv[k].m}）之后 @ ${(s.mv[k].t/1000).toFixed(2)}s`});
+$('#cm').onchange=e=>{if(e.target.value==='')return;const o=D[+e.target.value],ro=analyze(o),nm=[...new Set([...r.rows,...ro.rows].map(x=>x.n))];$('#cmr').innerHTML='<table><tr><th>阶段</th><th>本次</th><th>对比</th><th>更快</th></tr>'+nm.map(n=>{const a=r.rows.find(x=>x.n===n),b=ro.rows.find(x=>x.n===n);return`<tr><td>${n}</td><td>${a?fm(a.tm):'-'}</td><td>${b?fm(b.tm):'-'}</td><td>${a&&b?(a.tm<b.tm?'本次':'对比'):'-'}</td></tr>`}).join('')+'</table>'}}
+function replay(s){stopRp();flush();resetCube();s.scr.split(' ').forEach(instant);rp={s,i:0,p:false};rstep()}
+function stopRp(){if(rp){clearTimeout(rp.h);rp=null}}
+function rstep(){if(!rp||rp.p)return;const {s,i}=rp;if(i>=s.mv.length){$('#rps').textContent='重播结束';rp=null;return}
+const w=Math.min(1500,(s.mv[i].t-(i?s.mv[i-1].t:0))/(+$('#rpr').value));rp.h=setTimeout(()=>{if(!rp)return;Q.push({m:parse(s.mv[i].m)});$('#rps').textContent=`第 ${i+1}/${s.mv.length} 步：${s.mv[i].m} @ ${(s.mv[i].t/1000).toFixed(2)}s`;rp.i++;rstep()},w)}
+// ---- stats ----
+function renderStats(){const el=$('#p-stats');if(!D.length){el.innerHTML='<p class="mu">暂无数据。完成还原后这里会显示统计与进步曲线。</p>';return}
+const v=D.map(val),b=v.filter(x=>x<Infinity),n=D.length,Dv=D.filter(s=>!s.pure),tp=Dv.length?Dv.reduce((p,c)=>p+c.mv.length/(c.t/1000),0)/Dv.length:0,mc=Dv.length?Dv.reduce((p,c)=>p+c.mv.length,0)/Dv.length:0;
+const z=v.slice(-100),mx=Math.max(...z.filter(x=>x<Infinity),1),W=300,H=110,px=i=>6+i*(W-12)/Math.max(1,z.length-1),py=x=>H-6-(Math.min(x,mx)/mx)*(H-12);
+const a5=z.map((_,i)=>ao(v.slice(0,v.length-z.length+i+1),5)),ln=a5.map((x,i)=>x===null||x===Infinity?null:px(i)+','+py(x)).filter(Boolean).join(' ');
+const ms={};D.forEach(s=>{(ms[s.method]=ms[s.method]||[]).push(s)});const half=Math.min(10,Math.floor(b.length/2));let tr='';
+if(half>=3){const A=b.slice(-half).reduce((p,c)=>p+c,0)/half,B=b.slice(-2*half,-half).reduce((p,c)=>p+c,0)/half;tr=`<p>最近 ${half} 次均值 ${fm(A)}，此前 ${half} 次 ${fm(B)}：${A<B?'有进步':'暂无进步'}（差 ${fm(Math.abs(A-B))}）。</p>`}
+const wk=d=>{const L=D.filter(s=>s.d>Date.now()-d*864e5&&s.pen!=='DNF');return L.length?`${L.length} 次，平均 ${fm(L.reduce((p,c)=>p+val(c),0)/L.length)}`:'无记录'};
+const AG={};D.filter(s=>!s.pure&&s.ph.length).slice(-20).forEach(s=>{analyze(s).rows.forEach(x=>{const a=AG[x.n]=AG[x.n]||{t:0,pz:0,mc:0,n:0};a.t+=x.tm;a.pz+=x.pz;a.mc+=x.mc;a.n++})});const ge=Object.entries(AG).sort((a,b)=>b[1].t/b[1].n-a[1].t/a[1].n);
+const phh=ge.length?`<h4>阶段平均（最近 20 次模拟器还原）</h4><table><tr><th>阶段</th><th>平均用时</th><th>平均步数</th><th>停顿占比</th></tr>${ge.map(([n,a],k)=>`<tr><td>${n}${k===0?' 最慢':k===ge.length-1?' 最快':''}</td><td>${fm(a.t/a.n)}</td><td>${(a.mc/a.n).toFixed(1)}</td><td>${Math.round(a.pz/a.t*100)}%</td></tr>`).join('')}</table><div class="tip">推荐训练：${ge[0][0]} 最耗时，停顿占 ${Math.round(ge[0][1].pz/ge[0][1].t*100)}%，${ge[0][1].pz/ge[0][1].t>.4?'问题偏向识别或规划，建议做识别与 Lookahead 练习':'问题偏向执行，建议做指法与公式流畅度练习'}。</div>`:'';
+el.innerHTML=`<div class="tl"><div><span class="mu">总还原</span><b>${n}</b></div><div><span class="mu">最佳单次</span><b>${b.length?fm(Math.min(...b)):'-'}</b></div><div><span class="mu">当前 Ao5</span><b>${fm(ao(v,5)??null)||'-'}</b></div><div><span class="mu">最佳 Ao5</span><b>${bestAo(v,5)===null?'-':fm(bestAo(v,5))}</b></div><div><span class="mu">最佳 Ao12</span><b>${bestAo(v,12)===null?'-':fm(bestAo(v,12))}</b></div><div><span class="mu">平均 TPS / 步数</span><b>${tp.toFixed(1)} / ${mc.toFixed(0)}</b></div></div>
+<svg viewBox="0 0 ${W} ${H}" style="width:100%;margin-top:8px">${z.map((x,i)=>x<Infinity?`<circle cx="${px(i)}" cy="${py(x)}" r="2" fill="var(--mu)"/>`:'').join('')}<polyline points="${ln}" fill="none" stroke="var(--ac)" stroke-width="2"/></svg><div class="mu">点：单次，线：Ao5（最近 ${z.length} 次）</div>${tr}
+<p>本周：${wk(7)}；本月：${wk(30)}</p>${phh}<table><tr><th>方法</th><th>次数</th><th>平均</th><th>平均 TPS</th></tr>${Object.keys(ms).map(k=>{const l=ms[k],bb=l.filter(x=>x.pen!=='DNF');return`<tr><td>${k}</td><td>${l.length}</td><td>${bb.length?fm(bb.reduce((p,c)=>p+val(c),0)/bb.length):'-'}</td><td>${l[0].pure?'-':(l.reduce((p,c)=>p+c.mv.length/(c.t/1000),0)/l.length).toFixed(1)}</td></tr>`}).join('')}</table>
+<table style="margin-top:8px"><tr><th>#</th><th>成绩</th><th>方法</th><th>日期</th></tr>${D.map((s,i)=>[i,s]).reverse().slice(0,30).map(([i,s])=>`<tr class="k" data-i="${i}"><td>${i+1}</td><td>${fm(val(s))}${s.pen===2?'+':''}</td><td>${s.method}</td><td>${new Date(s.d).toLocaleString()}</td></tr>`).join('')}</table><div class="mu">点击记录查看 AI 分析与重播</div><h4>数据备份</h4><textarea id="bk" rows="3" style="width:100%;box-sizing:border-box;background:var(--sf);color:var(--tx);border:1px solid var(--bd)"></textarea><div class="row"><button id="bex">导出到文本框</button><button id="bim">从文本框导入</button></div>`;
+el.querySelectorAll('tr.k').forEach(t=>t.onclick=()=>{S.sel=+t.dataset.i;show('ai')});
+$('#bex').onclick=()=>{const j=JSON.stringify({solves:D,alg:AL});$('#bk').value=j;try{navigator.clipboard.writeText(j)}catch(e){}};
+$('#bim').onclick=()=>{try{const o=JSON.parse($('#bk').value);if(!Array.isArray(o.solves))throw 0;D=o.solves;Object.assign(AL,o.alg||{});LS.set('sc_solves',D);LS.set('sc_alg',AL);tiles();renderStats()}catch(e){$('#bk').value='格式不正确，导入失败'}}}
+// ---- algs ----
+function renderAlg(){const el=$('#p-alg');el.innerHTML=`<p class="mu">示例公式库（${ALGS.length} 条，后续可扩展至完整 OLL/PLL）。点击「演示」，魔方会先进入该 Case，再逐步执行公式。</p>
+<div class="row"><button id="qz">识别测试</button><span id="qs" class="mu"></span></div><div id="qa"></div><table>${ALGS.map((a,i)=>`<tr><td><b>${a.n}</b> <span class="mu">${a.s}</span><div class="scr" style="font-size:13px">${a.a}</div></td><td><button data-d="${i}">演示</button> <button data-f="${i}">${AL[a.n]&&AL[a.n].f?'★':'☆'}</button> <button data-l="${i}">${AL[a.n]&&AL[a.n].l?'已学':'未学'}</button></td></tr>`).join('')}</table><div id="ads"></div>`;
+$('#qz').onclick=quiz;const Q0=LS.get('sc_q',{n:0,ok:0,ms:0});$('#qs').textContent=Q0.n?`正确率 ${Math.round(Q0.ok/Q0.n*100)}%（${Q0.ok}/${Q0.n}），平均反应 ${(Q0.ms/Q0.n/1000).toFixed(1)}s`:'魔方上显示一个 Case，选出对应公式';
+const sv=(i,k)=>{const n=ALGS[i].n;AL[n]=AL[n]||{};AL[n][k]=!AL[n][k];LS.set('sc_alg',AL);renderAlg()};
+el.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>sv(+b.dataset.f,'f'));el.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>sv(+b.dataset.l,'l'));
+el.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{const a=ALGS[+b.dataset.d],t=a.a.split(' ');stopRp();flush();resetCube();invA(t).forEach(instant);t.forEach(m=>Q.push({m:parse(m)}));
+$('#ads').innerHTML='<h4>步骤说明</h4>'+t.map((m,k)=>{const p=parse(m);return`<div>${k+1}. <b>${m}</b> — ${CN[p.f]}${'RLUDFB'.includes(p.f)?'面':''}${p.d===2?'转 180°':p.d===1?'顺时针 90°':'逆时针 90°'}</div>`}).join('')})}
+function quiz(){stopRp();flush();resetCube();const a=ALGS[Math.random()*ALGS.length|0];invA(a.a.split(' ')).forEach(instant);const o=[a,...ALGS.filter(x=>x!==a).sort(()=>Math.random()-.5).slice(0,3)].sort(()=>Math.random()-.5),t0=performance.now();
+$('#qa').innerHTML='<div class="row">'+o.map((x,i)=>`<button data-o="${i}">${x.n}</button>`).join('')+'</div><div id="qr"></div>';
+$('#qa').querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{const g=o[+b.dataset.o]===a,ms=performance.now()-t0,q=LS.get('sc_q',{n:0,ok:0,ms:0});q.n++;q.ok+=g;q.ms+=ms;LS.set('sc_q',q);$('#qr').innerHTML=`<div class="tip">${g?'正确':'错误'}，反应 ${(ms/1000).toFixed(1)}s。答案：${a.n} — ${a.a}</div><button id="qn">下一题</button>`;$('#qn').onclick=quiz;$('#qs').textContent=`正确率 ${Math.round(q.ok/q.n*100)}%（${q.ok}/${q.n}），平均反应 ${(q.ms/q.n/1000).toFixed(1)}s`})}
+// ---- ui ----
+const TABS={timer:'计时器（实体魔方）',sim:'魔方模拟器',stats:'统计',ai:'AI 分析',alg:'公式库'};
+$('#nv').innerHTML=Object.keys(TABS).map(k=>`<button data-t="${k}">${TABS[k]}</button>`).join('');
+function show(t){stopRp();tab=t;document.querySelectorAll('#nv button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));['timer','stats','ai','alg'].forEach(k=>$('#p-'+k).classList.toggle('hid',k!==(t==='sim'?'timer':t)));$('#p-timer').classList.toggle('pt',t==='timer');$('main').classList.toggle('one',t==='timer'||t==='stats');$('#cvs').classList.toggle('hid',t==='timer'||t==='stats');size();
+if((t==='timer'||t==='sim')&&S.mode==='idle')newScramble();if(t==='stats')renderStats();if(t==='ai')renderAI();if(t==='alg')renderAlg()}
+document.querySelectorAll('#nv button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+$('#mv').innerHTML='RLUDFBMESxyz'.split('').map(f=>`<div>${["","'","2"].map(s=>`<button data-m="${f+s}">${f+s}</button>`).join('')}</div>`).join('');
+const wm=m=>$('#wide').checked&&'RLUDFB'.includes(m[0])&&!m.includes('w')?m[0]+'w'+m.slice(1):m;
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>userMove(wm(b.dataset.m)));
+$('#un').onclick=()=>{const m=hist.pop();if(m){redo.push(m);userMove(inv(m),1)}};$('#re').onclick=()=>{const m=redo.pop();if(m){hist.push(m);userMove(m,1)}};
+$('#rs').onclick=()=>{if(S.mode==='idle'){stopRp();flush();resetCube();S.dirty=true;hist=[];redo=[]}};
+$('#bns').onclick=()=>{if(S.mode==='idle')newScramble()};$('#styp').onchange=()=>{if(S.mode==='idle')newScramble()};
+$('#bcp').onclick=()=>{try{navigator.clipboard.writeText(S.scr);$('#st').textContent='已复制打乱公式'}catch(e){}};
+$('#tm').onclick=space;
+const pen=p=>{const s=S.last;if(!s||S.mode!=='idle')return;s.pen=s.pen===p?0:p;LS.set('sc_solves',D);$('#tm').textContent=fm(val(s));tiles()};
+$('#p2').onclick=()=>pen(2);$('#pd').onclick=()=>pen('DNF');$('#px').onclick=()=>{if(S.last&&S.mode==='idle'){const k=D.indexOf(S.last);if(k>=0)D.splice(k,1);S.last=null;LS.set('sc_solves',D);S.sel=D.length-1;$('#tm').textContent='0.00';tiles()}};
+addEventListener('keydown',e=>{if(e.target.id==='fi'||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)&&e.code!=='Space'||e.ctrlKey||e.metaKey)return;
+if(e.code==='Space'){if(e.target.tagName==='BUTTON'||e.target.tagName==='INPUT'||e.target.tagName==='SELECT')e.target.blur();e.preventDefault();if(!e.repeat)space();return}
+const k=e.key.toUpperCase();if(k==='W'&&!e.repeat){$('#wide').checked=!$('#wide').checked;return}if(k.length===1&&'RLUDFBMESXYZ'.includes(k)&&!e.repeat){e.preventDefault();const b='XYZ'.includes(k)?k.toLowerCase():k;userMove(wm(b+(e.shiftKey?"'":'')))}});
+function runF(){const a=$('#fi').value.replace(/[’‘]/g,"'").trim().split(/\s+/).filter(Boolean);if(!a.length)return;if(!a.every(x=>valid(norm(x)))){$('#st').textContent='公式格式有误，示例：r U R\' M2 x';return}a.forEach(x=>userMove(x));$('#fi').value=''}
+$('#fb').onclick=runF;$('#fi').onkeydown=e=>{if(e.key==='Enter')runF()};
+
+(function loop(){requestAnimationFrame(loop);anim();disp();RD.render(sc,cam)})();
+tiles();show('timer');
+</script></body></html>
