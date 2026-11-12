@@ -24,7 +24,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:4px 6px;b
 .tip{border-left:3px solid var(--ac);padding:2px 10px;margin:6px 0}.hid{display:none}main.one{grid-template-columns:1fr;max-width:640px}.pt .co{display:none}
 tr.k{cursor:pointer}tr.k:hover{background:var(--bg)}
 </style></head><body>
-<header><h1>SmartCube <b>AI</b></h1><nav id="nv"></nav></header>
+<header><h1>SmartCube <b>AI</b></h1><nav id="nv"></nav><select id="lg" style="margin-left:auto"><option value="zh">中文</option><option value="en">English</option></select></header>
 <main><section id="cvs"><div id="cv" class="box"></div>
 <div class="box" style="margin-top:12px"><div class="row"><button id="un">撤销</button><button id="re">重做</button><button id="rs">重置魔方</button><span class="mu">键盘：R L U D F B M E S X Y Z，Shift 逆时针，W 切换双层，空格计时；也可在下方输入公式（小写 r u 等即双层）</span></div><div class="mv" id="mv"></div><div class="row"><input id="fi" placeholder="输入公式，如 r U R' M2 x" style="flex:1;min-width:0;background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:7px;padding:5px;font:inherit"><button id="fb">执行</button></div></div></section>
 <aside class="box">
@@ -80,7 +80,9 @@ Roux:[['First Block',()=>blk(-1)||blk(1)],['Second Block',()=>blk(-1)&&blk(1)],[
 // ---- algs ----
 const ALGS=[{n:'Sune',s:'OLL',a:"R U R' U R U2 R'"},{n:'Anti-Sune',s:'OLL',a:"R U2 R' U' R U' R'"},{n:'线型 OLL',s:'OLL',a:"F R U R' U' F'"},
 {n:'T-Perm',s:'PLL',a:"R U R' U' R' F R2 U' R' U' R U R' F'"},{n:'Y-Perm',s:'PLL',a:"F R U' R' U' R U R' F' R U R' U' R' F R F'"},{n:'Ua-Perm',s:'PLL',a:"R U' R U R U R U' R' U' R2"},{n:'Ub-Perm',s:'PLL',a:"R2 U R U R' U' R' U' R' U R'"},{n:'Jb-Perm',s:'PLL',a:"R U R' F' R U R' U' R' F R2 U' R'"}];
-const AL=LS.get('sc_alg',{});
+const AL=LS.get('sc_alg',{});let AF='all';
+const PLL21=[['Aa',`x R' U R' D2 R U' R' D2 R2`],['Ab',`x R2 D2 R U R' D2 R U' R`],['E',`x' R U' R' D R U R' D' R U R' D R U' R' D'`],['F',`R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R`],['Ga',`R2 U R' U R' U' R U' R2 U' D R' U R D'`],['Gb',`R' U' R U D' R2 U R' U R U' R U' R2 D`],['Gc',`R2 U' R U' R U R' U R2 U D' R U' R' D`],['Gd',`R U R' U' D R2 U' R U' R' U R' U R2 D'`],['H',`M2 U M2 U2 M2 U M2`],['Ja',`x R2 F R F' R U2 r' U r U2`],['Jb',`R U R' F' R U R' U' R' F R2 U' R'`],['Na',`R U R' U R U R' F' R U R' U' R' F R2 U' R' U2 R U' R'`],['Nb',`R' U R U' R' F' U' F R U R' F R' F' R U' R`],['Ra',`R U' R' U' R U R D R' U' R D' R' U2 R'`],['Rb',`R' U2 R U2 R' F R U R' U' R' F' R2`],['T',`R U R' U' R' F R2 U' R' U' R U R' F'`],['Ua',`R U' R U R U R U' R' U' R2`],['Ub',`R2 U R U R' U' R' U' R' U R'`],['V',`R' U R' U' y R' F' R2 U' R' U R' F R F`],['Y',`F R U' R' U' R U R' F' R U R' U' R' F R F'`],['Z',`M' U M2 U M2 U M' U2 M2`]];
+ALGS.splice(3,ALGS.length,...PLL21.map(([n,a])=>({n:n+'-Perm',s:'PLL',a})));
 // ---- timer ----
 let D=LS.get('sc_solves',[]),S={mode:'idle',mv:[],ph:[],pi:0,scr:'',dirty:false,pen:0,sel:-1},hist=[],redo=[],tab='timer',rp=null;
 const PH=()=>MT[S.method||$('#mth').value];
@@ -152,8 +154,8 @@ $('#bex').onclick=()=>{const j=JSON.stringify({solves:D,alg:AL});$('#bk').value=
 $('#bim').onclick=()=>{try{const o=JSON.parse($('#bk').value);if(!Array.isArray(o.solves))throw 0;D=o.solves;Object.assign(AL,o.alg||{});LS.set('sc_solves',D);LS.set('sc_alg',AL);tiles();renderStats()}catch(e){$('#bk').value='格式不正确，导入失败'}}}
 // ---- algs ----
 function renderAlg(){const el=$('#p-alg');el.innerHTML=`<p class="mu">示例公式库（${ALGS.length} 条，后续可扩展至完整 OLL/PLL）。点击「演示」，魔方会先进入该 Case，再逐步执行公式。</p>
-<div class="row"><button id="qz">识别测试</button><span id="qs" class="mu"></span></div><div id="qa"></div><table>${ALGS.map((a,i)=>`<tr><td><b>${a.n}</b> <span class="mu">${a.s}</span><div class="scr" style="font-size:13px">${a.a}</div></td><td><button data-d="${i}">演示</button> <button data-f="${i}">${AL[a.n]&&AL[a.n].f?'★':'☆'}</button> <button data-l="${i}">${AL[a.n]&&AL[a.n].l?'已学':'未学'}</button></td></tr>`).join('')}</table><div id="ads"></div>`;
-$('#qz').onclick=quiz;const Q0=LS.get('sc_q',{n:0,ok:0,ms:0});$('#qs').textContent=Q0.n?`正确率 ${Math.round(Q0.ok/Q0.n*100)}%（${Q0.ok}/${Q0.n}），平均反应 ${(Q0.ms/Q0.n/1000).toFixed(1)}s`:'魔方上显示一个 Case，选出对应公式';
+<div class="row"><select id="af">${[['all','全部'],['OLL','OLL'],['PLL','PLL'],['fav','收藏'],['lrn','已学']].map(([v,t])=>`<option value="${v}"${v===AF?' selected':''}>${t}</option>`).join('')}</select><button id="qz">识别测试</button><span id="qs" class="mu"></span></div><div id="qa"></div><table>${ALGS.map((a,i)=>[a,i]).filter(([a])=>AF==='all'||(AF==='fav'?AL[a.n]&&AL[a.n].f:AF==='lrn'?AL[a.n]&&AL[a.n].l:a.s===AF)).map(([a,i])=>`<tr><td><b>${a.n}</b> <span class="mu">${a.s}</span><div class="scr" style="font-size:13px">${a.a}</div></td><td><button data-d="${i}">演示</button> <button data-f="${i}">${AL[a.n]&&AL[a.n].f?'★':'☆'}</button> <button data-l="${i}">${AL[a.n]&&AL[a.n].l?'已学':'未学'}</button></td></tr>`).join('')}</table><div id="ads"></div>`;
+$('#qz').onclick=quiz;$('#af').onchange=e=>{AF=e.target.value;renderAlg()};const Q0=LS.get('sc_q',{n:0,ok:0,ms:0});$('#qs').textContent=Q0.n?`正确率 ${Math.round(Q0.ok/Q0.n*100)}%（${Q0.ok}/${Q0.n}），平均反应 ${(Q0.ms/Q0.n/1000).toFixed(1)}s`:'魔方上显示一个 Case，选出对应公式';
 const sv=(i,k)=>{const n=ALGS[i].n;AL[n]=AL[n]||{};AL[n][k]=!AL[n][k];LS.set('sc_alg',AL);renderAlg()};
 el.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>sv(+b.dataset.f,'f'));el.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>sv(+b.dataset.l,'l'));
 el.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{const a=ALGS[+b.dataset.d],t=a.a.split(' ');stopRp();flush();resetCube();invA(t).forEach(instant);t.forEach(m=>Q.push({m:parse(m)}));
@@ -184,5 +186,42 @@ function runF(){const a=$('#fi').value.replace(/[’‘]/g,"'").trim().split(/\s
 $('#fb').onclick=runF;$('#fi').onkeydown=e=>{if(e.key==='Enter')runF()};
 
 (function loop(){requestAnimationFrame(loop);anim();disp();RD.render(sc,cam)})();
+// ---- i18n (zh default; add a language = add one rule list) ----
+const EXA={全部:'All',收藏:'Favorites',撤销:'Undo',重做:'Redo',重置魔方:'Reset cube',执行:'Run',新打乱:'New scramble',复制:'Copy',删除:'Delete',转速:'Speed','观察 15 秒':'Inspection 15s','双层(w)':'Wide (w)',保存到统计:'Save to stats','生成 AI 分析':'Generate AI analysis','标准 20 步':'Standard 20 moves','短打乱 8 步（Cross 练习）':'Short 8 moves (Cross practice)','PLL 专项':'PLL practice','OLL 专项':'OLL practice','每日挑战（当天固定打乱）':'Daily challenge (same scramble all day)','ZZ（开发中）':'ZZ (coming soon)',按空格或点击时间开始:'Press Space or tap the time to start',还原次数:'Solves','计时器（实体魔方）':'Timer (physical cube)',魔方模拟器:'Cube Simulator',统计:'Stats','AI 分析':'AI Analysis',公式库:'Algorithms',总还原:'Total solves',最佳单次:'Best single','当前 Ao5':'Current Ao5','最佳 Ao5':'Best Ao5','最佳 Ao12':'Best Ao12','平均 TPS / 步数':'Avg TPS / moves',方法:'Method',次数:'Count',平均:'Average','平均 TPS':'Avg TPS',成绩:'Time',日期:'Date',数据备份:'Data backup',导出到文本框:'Export to text box',从文本框导入:'Import from text box',阶段:'Phase',平均用时:'Avg time',平均步数:'Avg moves',停顿占比:'Pause share',用时:'Time',步数:'Moves',起手停顿:'Start delay',本次:'This',对比:'Compare',更快:'Faster',改善建议:'Suggestions',对比另一次还原:'Compare with another solve','选择…':'Select…',重播:'Replay','暂停/继续':'Pause/Resume',演示:'Demo',已学:'Learned',未学:'Not learned',步骤说明:'Step-by-step',识别测试:'Recognition quiz',下一题:'Next',停顿:'Pauses'};
+const RUL=[
+['键盘：R L U D F B M E S X Y Z，Shift 逆时针，W 切换双层，空格计时；也可在下方输入公式（小写 r u 等即双层）','Keys: R L U D F B M E S X Y Z · Shift = counter-clockwise · W = wide toggle · Space = timer · or type algs below (lowercase r u … = wide)'],
+['已复制打乱公式','Scramble copied'],['观察中，按空格开始还原','Inspecting — press Space to start solving'],['计时中…再按空格停止，或还原后自动停止','Timing… press Space to stop, or it stops when solved'],['计时中…还原实体魔方后按空格停止','Timing… press Space when your physical cube is solved'],['已保存（纯计时）','Saved (timer only)'],
+[/步数 ([0-9]+) · TPS ([.0-9]+) · 在「AI 分析」查看报告/,'Moves $1 · TPS $2 · see the report under “AI Analysis”'],[/公式格式有误，示例：(.*)/,'Invalid alg format. Example: $1'],
+['暂无数据。完成还原后这里会显示统计与进步曲线。','No data yet. Stats and the progress curve appear after you solve.'],['还没有还原记录。先到计时器完成一次还原。','No solves yet. Finish one in the Cube Simulator first.'],['点击记录查看 AI 分析与重播','Click a solve to see its AI analysis and replay'],
+[/点：单次，线：Ao5（最近 ([0-9]+) 次）/,'Dots: single · line: Ao5 (last $1 solves)'],
+[/最近 ([0-9]+) 次均值 ([^，]+)，此前 ([0-9]+) 次 ([^：]+)：(有进步|暂无进步)（差 ([^）]+)）/,(m,a,b,c,d,e,f)=>`Last ${a} avg ${b} vs previous ${c} at ${d}: ${e==='有进步'?'improving':'no improvement yet'} (diff ${f})`],
+['本周：','This week: '],['；本月：','; this month: '],[/([0-9]+) 次，平均 /,'$1 solves, avg '],['无记录','none'],
+['阶段平均（最近 20 次模拟器还原）','Phase averages (last 20 simulator solves)'],[' 最慢',' (slowest)'],[' 最快',' (fastest)'],
+[/推荐训练：([^ ]+) 最耗时，停顿占 ([0-9]+)%，(.*)。/,(m,p,n,r)=>`Recommended training: ${p} takes the longest, pauses are ${n}% of it; ${r.includes('识别')?'the issue is recognition/planning, so do recognition and lookahead drills':'the issue is execution, so drill fingering and alg fluency'}.`],
+['格式不正确，导入失败','Invalid format — import failed'],
+[/已回到第 ([0-9]+) 步（([^）]+)）之后 @/,'Rewound to just after move $1 ($2) @'],[/第 ([0-9]+) 次/g,'#$1'],['纯计时记录没有转动数据，无法做 AI 分析。用虚拟魔方还原才会有分析报告。','Timer-only solves have no move data, so there is no AI analysis. Solve on the virtual cube to get a report.'],['纯计时','Timer only'],
+[/对比此前 ([0-9]+) 次 ([^：]+)：用时 (快|慢) ([.0-9]+) 秒，TPS ([-+])([.0-9]+)。/,(m,a,b,c,d,e,f)=>`Compared with your previous ${a} ${b} solves: ${c==='快'?'faster':'slower'} by ${d}s, TPS ${e}${f}.`],
+['逐步复盘（点任一步，魔方回到该步之后的状态；粗框=停顿）','Step review (click a move to rewind the cube to just after it; thick border = pause)'],[/｜(.+?)完成｜/g,'｜$1 done｜'],['重播结束','Replay finished'],[/第 ([0-9]+).([0-9]+) 步：/,'Move $1/$2: '],
+[/Cross 用了 ([0-9]+) 步（参考 8 步以内），建议加强 Cross Planning。/,'Cross took $1 moves (target: 8 or fewer). Work on Cross planning.'],
+[/开始转动前规划了约 ([.0-9]+) 秒，可在观察阶段规划完整 Cross。/,'You spent about $1s planning before the first move; try to plan the whole Cross during inspection.'],
+[/F2L 占总时间 ([0-9]+)%，建议练习 Pair Recognition 与 Lookahead。/,'F2L takes $1% of the solve. Practice pair recognition and lookahead.'],[/F2L 的 TPS 只有 ([.0-9]+)，建议练习流畅度。/,'F2L TPS is only $1; practice fluency.'],
+[/(OLL|PLL) 识别约耗时 ([.0-9]+) 秒（阶段开始到第一次转动），建议加强 (OLL|PLL) Recognition。/,'Recognising $1 took about $2s (phase start to first move). Improve $1 recognition.'],[/(OLL|PLL) 执行 TPS 仅 ([.0-9]+)，建议做公式专项训练。/,'$1 execution TPS is only $2; do dedicated alg drills.'],
+[/最耗时的阶段是 ([^ ]+)（([0-9]+)%），建议优先改善。/,'The slowest phase is $1 ($2%). Improve it first.'],[/([^ ]+) 用时 ([.0-9]+) 秒，其中停顿占 ([0-9]+)%、TPS ([.0-9]+)：/,'$1 took $2s ($3% pauses, TPS $4): '],
+['慢在识别或规划（想得久），不是手速问题，建议做识别与 Lookahead 专项','mostly recognition/planning (thinking time), not hand speed — do recognition and lookahead drills'],['慢在执行（停顿不多但转动偏慢），建议练习指法流畅度','mostly execution (few pauses but slow turning) — practice fingering fluency'],
+[/最长的一次停顿 ([.0-9]+) 秒，出现在(.+?)(?: 阶段)?第 ([0-9]+) 步（([^ ]+) 之后、([^ ]+) 之前）。/,'Longest pause: $1s in $2, before move $3 (after $4, before $5).'],['未完成阶段','an unfinished phase'],
+[/出现 ([0-9]+) 次明显停顿（平均 ([.0-9]+) 秒，阈值 ([.0-9]+) 秒），建议加强 Lookahead。/,'$1 noticeable pauses (avg $2s, threshold $3s). Work on lookahead.'],[/有 ([0-9]+) 处相邻转动同面，可合并或抵消，注意动作效率。/,'$1 adjacent same-face turns could be merged or cancelled — watch move efficiency.'],
+['本次未走完全部阶段（手动停止或未按所选方法还原），阶段分析不完整。','Not all phases were completed (stopped manually or not solved with the chosen method), so the phase analysis is incomplete.'],['本次没有发现明显弱点，继续保持。','No obvious weakness found this time. Keep it up.'],
+[/示例公式库（([0-9]+) 条，后续可扩展至完整 OLL.PLL）。点击「演示」，魔方会先进入该 Case，再逐步执行公式。/,'Sample algorithm library ($1 algs; the full OLL/PLL sets are coming). Press “Demo”: the cube enters the case, then performs the alg step by step.'],
+['魔方上显示一个 Case，选出对应公式','The cube shows a case — pick the matching algorithm'],[/正确率 ([0-9]+)%（([0-9]+).([0-9]+)），平均反应 ([.0-9]+)s/,'Accuracy $1% ($2/$3), avg reaction $4s'],[/(正确|错误)，反应 ([.0-9]+)s。答案：/,(m,a,b)=>`${a==='正确'?'Correct':'Wrong'}, reaction ${b}s. Answer: `],
+['M 中层（同 L 方向）','M slice (like L) '],['E 中层（同 D 方向）','E slice (like D) '],['S 中层（同 F 方向）','S slice (like F) '],['整体 x（同 R）','whole cube x (like R) '],['整体 y（同 U）','whole cube y (like U) '],['整体 z（同 F）','whole cube z (like F) '],
+[/(右|左|上|下|前|后)面(?=顺|逆|转)/g,(m,a)=>({右:'right',左:'left',上:'top',下:'bottom',前:'front',后:'back'})[a]+' face '],['逆时针 90°','counter-clockwise 90°'],['顺时针 90°','clockwise 90°'],['转 180°','turn 180°'],
+['第一层','First layer'],['第二层','Second layer'],['最后一层','Last layer'],['，',', '],['。','. '],['：',': '],['（',' ('],['）',')']];
+const OR=new WeakMap();let LG=LS.get('sc_lang','zh');const CJ=/[一-龥｜]/;
+const tr=s=>{const t=s.trim();if(Object.prototype.hasOwnProperty.call(EXA,t))return s.replace(t,()=>EXA[t]);let o=s;for(const [k,v] of RUL)o=typeof k==='string'?o.split(k).join(v):o.replace(k,v);return o};
+function fix(n){if(LG!=='en'||n.nodeType!==3||!n.parentNode)return;const v=n.nodeValue;if(!CJ.test(v)||/^(SCRIPT|STYLE)$/.test(n.parentNode.tagName))return;const o=tr(v);if(o!==v){OR.set(n,v);n.nodeValue=o}}
+function walk(r,f){const w=document.createTreeWalker(r,4);let n;while(n=w.nextNode())f(n)}
+new MutationObserver(ms=>ms.forEach(m=>{if(m.type==='characterData')fix(m.target);m.addedNodes.forEach(a=>a.nodeType===3?fix(a):a.nodeType===1&&walk(a,fix))})).observe(document.body,{childList:true,characterData:true,subtree:true});
+function setLang(l){LG=l;LS.set('sc_lang',l);document.documentElement.lang=l==='en'?'en':'zh';$('#fi').placeholder=l==='en'?`Type alg, e.g. r U R' M2 x`:`输入公式，如 r U R' M2 x`;walk(document.body,n=>{if(l==='en')fix(n);else if(OR.has(n)){n.nodeValue=OR.get(n);OR.delete(n)}})}
+$('#lg').value=LG;$('#lg').onchange=e=>setLang(e.target.value);if(LG==='en')setLang('en');
 tiles();show('timer');
 </script></body></html>
